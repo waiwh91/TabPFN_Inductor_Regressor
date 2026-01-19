@@ -69,7 +69,7 @@ tlam_regressor.fit(tlam_train_x, tlam_train_y)
 tlam_test_x = np.concatenate((test_data[:,0:2], test_data[:,3:]), axis=1)
 tlam_test_y = test_data[:,2]
 
-tlam_prediction = tlam_regressor.predict(tlam_test_x)
+tlam_prediction = tlam_regressor.predict(tlam_test_x, output_type="median")
 tlam_mpe = mean_absolute_percentage_error(tlam_prediction, tlam_test_y)
 tlam_r2 = r2_score(tlam_prediction, tlam_test_y)
 print("tlam Predict:")
@@ -89,7 +89,7 @@ nlam_regressor.fit(nlam_train_x, nlam_train_y)
 nlam_test_x = np.concatenate((test_data[:,0:3], test_data[:,4:]), axis=1)
 nlam_test_y = test_data[:,3]
 
-nlam_prediction = nlam_regressor.predict(nlam_test_x)
+nlam_prediction = nlam_regressor.predict(nlam_test_x, output_type="median")
 nlam_mpe = mean_absolute_percentage_error(nlam_prediction, nlam_test_y)
 nlam_r2 = r2_score(nlam_prediction, nlam_test_y)
 print("nlam Predict:")
