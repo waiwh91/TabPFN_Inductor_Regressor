@@ -1,6 +1,7 @@
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_percentage_error
 from sklearn.model_selection import train_test_split
 from tabpfn_extensions.rf_pfn import RandomForestTabPFNRegressor
+from tabpfn_extensions import interpretability
 from tabpfn import TabPFNRegressor
 from tabpfn import TabPFNClassifier
 from tabpfn_extensions.unsupervised import TabPFNUnsupervisedModel
@@ -49,6 +50,12 @@ print("R² Score:", L_r2)
 
 q = 2 * np.pi * X_test[:,6] * L_predictions / R_predictions
 
+shap_values = interpretability.shap.get_shap_values(
+    estimator=R_reg,
+    test_x=X_test[:50],
+    attribute_names=["tcu", "wcu", "tlam", "nlam", "aln", "tsu8", "freq"],
+    algorithm="permutation",
+)
 
 
 
@@ -57,6 +64,7 @@ output_df = pd.DataFrame(
              "aln": X_test[:, 4], "tsu": X_test[:, 5], "freq": X_test[:,6], "Pre_Q": q,
              "Pre_R": R_predictions, "Pre_L": L_predictions})
 
+fig = interpretability.shap.plot_shap(shap_values)
 
 
 output_df.to_csv("output.csv", index=False)
