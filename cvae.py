@@ -10,10 +10,10 @@ import para_test
 # -----------------------------
 input_dim = 6       # 生成目标的维度
 condition_dim = 3   # 条件维度
-latent_dim = 16   # 潜在变量维度
-hidden_dim = 16
+latent_dim = 32   # 潜在变量维度
+hidden_dim = 32
 batch_size = 64
-epochs = 100
+epochs = 150
 learning_rate = 1e-3
 num_samples = 1690
 
@@ -40,9 +40,9 @@ class CVAE(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_dim + condition_dim, 16),
             nn.ReLU(),
-            nn.Linear(16, 16),
+            nn.Linear(16, 32),
             nn.ReLU(),
-            nn.Linear(16, hidden_dim),
+            nn.Linear(32, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
@@ -53,13 +53,12 @@ class CVAE(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim + condition_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 16),
             nn.ReLU(),
-            nn.Linear(16, 16),
+            nn.Linear(16, 8),
             nn.ReLU(),
-            nn.Linear(16, input_dim),
+            nn.Linear(8, input_dim),
         )
 
     def encode(self, x, c):
@@ -91,7 +90,7 @@ def loss_functon(recon_x, x, mu, logvar):
     q_pre = (recon_x[1] * 2 * torch.pi ) / recon_x[0]
 
     kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return recon_loss + kld
+    return recon_loss + kld * 1.5
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -115,17 +114,21 @@ for epoch in range(epochs):
     print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / num_samples:.4f}")
 
 model.eval()
-with torch.no_grad():
-    condition = torch.tensor([[120.38, 4.33, 50.5]]).to(device)
+with ((torch.no_grad())):
+    targetR = 123.45
+    targetL = 3.76
+    f = 50.5
+    condition = torch.tensor([[targetR, targetL, f]]).to(device)
 
-    z = torch.randn(10, latent_dim).to(device)
+    z = 2*torch.randn(600, latent_dim).to(device)
+
     condition = condition.expand(z.size(0), -1)
 
 
     generated = model.decode(z, condition)
     generated = generated.cpu().numpy()
-    generated = np.column_stack([generated, np.full(generated.shape[0], 50.5)])
+    generated = np.column_stack([generated, np.full(generated.shape[0], f)])
 
     print("Generated 7D outputs:\n", generated)
-    para_test.test(generated)
+    para_test.test(generated, targetR, targetL, f)
 

@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 
-def test(X):
+def test(X, targetR, targetL, f):
     # train_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/interpolation_data.csv').to_numpy()
     # test_data = pd.read_csv("../ML_Inductor_QLR_Predictor/training_csv/pinn_data.csv").to_numpy()
     train_data = pd.read_csv("../ML_Inductor_QLR_Predictor/training_csv/pinn_data.csv").to_numpy()
@@ -42,4 +42,26 @@ def test(X):
     r = R_regressor.predict(X)
     l = L_regressor.predict(X)
 
+
     print(r, l)
+    result = []
+    freq = [f]
+    print("===========Validating===========")
+    for i in range(len(X)):
+        temp = []
+        if r[i] <= targetR*1.1 and r[i] >= targetR*0.9 and l[i] <= targetL*1.1 and l[i] >= targetL*0.9:
+            print(i)
+            temp = np.concatenate((X[i].reshape(-1), np.array([r[i], l[i]])))
+            result.append(temp)
+
+    print("=========Validated Designs==========")
+    print(result)
+    print(len(result))
+    result = np.array(result)
+    output_df = pd.DataFrame(
+        {"tCu": result[:, 0], "wCu": result[:, 1], "tLam": result[:, 2], "nLam": result[:, 3],
+         "aln": result[:, 4], "tsu": result[:, 5], "freq": result[:, 6],
+         "Pre_R": result[:,7], "Pre_L": result[:,8]})
+
+
+    output_df.to_csv("designs.csv", index=False)
