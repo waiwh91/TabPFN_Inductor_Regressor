@@ -5,6 +5,9 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
 import para_test
+
+
+
 # -----------------------------
 # 配置
 # -----------------------------
@@ -13,7 +16,7 @@ condition_dim = 3   # 条件维度
 latent_dim = 32   # 潜在变量维度
 hidden_dim = 32
 batch_size = 64
-epochs = 150
+epochs = 100
 learning_rate = 1e-3
 num_samples = 1690
 
@@ -68,10 +71,10 @@ class CVAE(nn.Module):
         logvar = self.fc_logvar(h)
         return mu, logvar
 
-    def reparameterize(self, mu, logvar):
+    def reparameterize(self, mu, logvar, alpha = 1.4):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        return mu + eps * std
+        return mu + eps * std * alpha
 
     def decode(self, z, c):
 
@@ -85,12 +88,14 @@ class CVAE(nn.Module):
         return x_recon, mu, logvar
 
 def loss_functon(recon_x, x, mu, logvar):
+    # print(mu.mean(), mu.std())
+    # print(logvar.mean(), logvar.std())
 
     recon_loss = F.mse_loss(recon_x, x)
     q_pre = (recon_x[1] * 2 * torch.pi ) / recon_x[0]
 
     kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return recon_loss + kld * 1.5
+    return recon_loss + kld * 0.4
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -115,8 +120,8 @@ for epoch in range(epochs):
 
 model.eval()
 with ((torch.no_grad())):
-    targetR = 123.45
-    targetL = 3.76
+    targetR = 133.45
+    targetL = 4.26
     f = 50.5
     condition = torch.tensor([[targetR, targetL, f]]).to(device)
 

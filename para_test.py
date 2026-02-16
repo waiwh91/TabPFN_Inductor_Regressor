@@ -7,6 +7,7 @@ from tabpfn import TabPFNClassifier
 from tabpfn_extensions.unsupervised import TabPFNUnsupervisedModel
 import torch
 from tabpfn.constants import ModelVersion
+import silhosue_kmean
 import pandas as pd
 import numpy as np
 
@@ -44,24 +45,25 @@ def test(X, targetR, targetL, f):
 
 
     print(r, l)
-    result = []
+    designs = []
     freq = [f]
     print("===========Validating===========")
     for i in range(len(X)):
         temp = []
-        if r[i] <= targetR*1.1 and r[i] >= targetR*0.9 and l[i] <= targetL*1.1 and l[i] >= targetL*0.9:
+        if r[i] <= targetR*1.05 and r[i] >= targetR*0.95 and l[i] <= targetL*1.05 and l[i] >= targetL*0.95:
             print(i)
             temp = np.concatenate((X[i].reshape(-1), np.array([r[i], l[i]])))
-            result.append(temp)
+            designs.append(temp)
 
     print("=========Validated Designs==========")
-    print(result)
-    print(len(result))
-    result = np.array(result)
+    print(designs)
+    print(len(designs))
+    designs = np.array(designs)
+
     output_df = pd.DataFrame(
-        {"tCu": result[:, 0], "wCu": result[:, 1], "tLam": result[:, 2], "nLam": result[:, 3],
-         "aln": result[:, 4], "tsu": result[:, 5], "freq": result[:, 6],
-         "Pre_R": result[:,7], "Pre_L": result[:,8]})
+        {"tCu": designs[:, 0], "wCu": designs[:, 1], "tLam": designs[:, 2], "nLam": designs[:, 3],
+         "aln": designs[:, 4], "tsu": designs[:, 5], "freq": designs[:, 6],
+         "Pre_R": designs[:,7], "Pre_L": designs[:,8]})
 
 
     output_df.to_csv("designs.csv", index=False)
