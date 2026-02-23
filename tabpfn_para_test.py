@@ -29,10 +29,10 @@ def test(X, targetR, targetL, f):
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
 
-    R_reg = TabPFNRegressor()
-    R_regressor = RandomForestTabPFNRegressor(tabpfn=R_reg)
-    L_reg = TabPFNRegressor()
-    L_regressor = RandomForestTabPFNRegressor(tabpfn=L_reg)
+    R_regressor = TabPFNRegressor()
+
+    L_regressor = TabPFNRegressor()
+
     R_regressor.fit(X_train, y_train_R)
     L_regressor.fit(X_train, y_train_L)
 
@@ -50,7 +50,7 @@ def test(X, targetR, targetL, f):
     print("===========Validating===========")
     for i in range(len(X)):
         temp = []
-        if r[i] <= targetR*1.05 and r[i] >= targetR*0.95 and l[i] <= targetL*1.05 and l[i] >= targetL*0.95:
+        if r[i] <= targetR*1.1 and r[i] >= targetR*0.9 and l[i] <= targetL*1.1 and l[i] >= targetL*0.9:
             print(i)
             temp = np.concatenate((X[i].reshape(-1), np.array([r[i], l[i]])))
             designs.append(temp)
@@ -66,4 +66,4 @@ def test(X, targetR, targetL, f):
          "Pre_R": designs[:,7], "Pre_L": designs[:,8]})
 
 
-    output_df.to_csv("designs.csv", index=False)
+    output_df.to_csv("csv/designs.csv", index=False)

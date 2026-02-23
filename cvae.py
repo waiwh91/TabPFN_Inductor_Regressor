@@ -4,7 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
-import para_test
+import tabpfn_para_test
+import pinn_para_test
 
 
 
@@ -16,11 +17,11 @@ condition_dim = 3   # 条件维度
 latent_dim = 32   # 潜在变量维度
 hidden_dim = 32
 batch_size = 64
-epochs = 100
+epochs = 160
 learning_rate = 1e-3
 num_samples = 1690
 
-data = pd.read_csv("output.csv").to_numpy()
+data = pd.read_csv("csv/output.csv").to_numpy()
 C = np.concatenate([data[:,8:], data[:,6:7]], axis=1)
 X = data[:,0:6]
 Q = data[:,7:8]
@@ -62,6 +63,7 @@ class CVAE(nn.Module):
             nn.Linear(16, 8),
             nn.ReLU(),
             nn.Linear(8, input_dim),
+            nn.Softplus(),
         )
 
     def encode(self, x, c):
@@ -125,7 +127,7 @@ with ((torch.no_grad())):
     f = 50.5
     condition = torch.tensor([[targetR, targetL, f]]).to(device)
 
-    z = 2*torch.randn(600, latent_dim).to(device)
+    z = 4*torch.randn(10000, latent_dim).to(device)
 
     condition = condition.expand(z.size(0), -1)
 
@@ -135,5 +137,5 @@ with ((torch.no_grad())):
     generated = np.column_stack([generated, np.full(generated.shape[0], f)])
 
     print("Generated 7D outputs:\n", generated)
-    para_test.test(generated, targetR, targetL, f)
+    pinn_para_test.test(generated, targetR, targetL, f)
 

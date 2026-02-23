@@ -10,9 +10,10 @@ from tabpfn.constants import ModelVersion
 import pandas as pd
 import numpy as np
 
-# train_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/interpolation_data.csv').to_numpy()
+
+train_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/interpolation_data.csv').to_numpy()
 # test_data = pd.read_csv("../ML_Inductor_QLR_Predictor/training_csv/pinn_data.csv").to_numpy()
-train_data = pd.read_csv("../ML_Inductor_QLR_Predictor/Parameter_impact/simulation_csv/new.csv").to_numpy()
+# train_data = pd.read_csv("../ML_Inductor_QLR_Predictor/Parameter_impact/simulation_csv/new.csv").to_numpy()
 test_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/pinn_data.csv').to_numpy()
 
 X_train = train_data[:,:7]
@@ -26,10 +27,14 @@ y_test_L = test_data[:,9]
 # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
 
-R_reg = TabPFNRegressor()
-R_regressor = RandomForestTabPFNRegressor(tabpfn=R_reg)
-L_reg = TabPFNRegressor()
-L_regressor = RandomForestTabPFNRegressor(tabpfn=L_reg)
+# R_reg = TabPFNRegressor(device=torch.device('cuda'))
+# R_regressor = RandomForestTabPFNRegressor(tabpfn=R_reg)
+# L_reg = TabPFNRegressor(device=torch.device('cuda'))
+# L_regressor = RandomForestTabPFNRegressor(tabpfn=L_reg)
+#
+R_regressor = TabPFNRegressor(device="cuda")
+L_regressor = TabPFNRegressor(device="cuda")
+
 R_regressor.fit(X_train, y_train_R)
 L_regressor.fit(X_train, y_train_L)
 
@@ -50,13 +55,13 @@ print("R² Score:", L_r2)
 
 q = 2 * np.pi * X_test[:,6] * L_predictions / R_predictions
 
-shap_values = interpretability.shap.get_shap_values(
-    estimator=R_reg,
-    test_x=X_test[:50],
-    attribute_names=["tcu", "wcu", "tlam", "nlam", "aln", "tsu8", "freq"],
-    algorithm="permutation",
-)
-
+# shap_values = interpretability.shap.get_shap_values(
+#     estimator=R_reg,
+#     test_x=X_test[:50],
+#     attribute_names=["tcu", "wcu", "tlam", "nlam", "aln", "tsu8", "freq"],
+#     algorithm="permutation",
+# )
+#
 
 
 output_df = pd.DataFrame(
@@ -64,8 +69,8 @@ output_df = pd.DataFrame(
              "aln": X_test[:, 4], "tsu": X_test[:, 5], "freq": X_test[:,6], "Pre_Q": q,
              "Pre_R": R_predictions, "Pre_L": L_predictions})
 
-fig = interpretability.shap.plot_shap(shap_values)
+# fig = interpretability.shap.plot_shap(shap_values)
 
 
-output_df.to_csv("output.csv", index=False)
+output_df.to_csv("csv/output.csv", index=False)
 
