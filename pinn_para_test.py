@@ -17,10 +17,11 @@ def test(X, targetR, targetL, f):
     print("===========Validating===========")
     for i in range(len(X)):
         temp = []
-        if r[i] <= targetR * 1.1 and r[i] >= targetR * 0.9 and l[i] <= targetL * 1.1 and l[i] >= targetL * 0.9:
-            print(i)
-            temp = np.concatenate((X[i].reshape(-1), np.array([r[i], l[i]])))
-            designs.append(temp)
+        if X[i,1] <= 300:
+            if r[i] <= targetR * 1.1 and r[i] >= targetR * 0.9 and l[i] <= targetL * 1.1 and l[i] >= targetL * 0.9:
+                print(i)
+                temp = np.concatenate((X[i].reshape(-1), np.array([r[i], l[i]])))
+                designs.append(temp)
 
     print("=========Validated Designs==========")
     print(designs)
