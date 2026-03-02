@@ -16,12 +16,12 @@ model.load_state_dict(torch.load('models/saved/PINN_model.pth'))
 pinn_x = pinn_data.to_numpy()
 
 
-validation = pd.read_csv('csv/output.csv').to_numpy()
+validation = pd.read_csv('csv/pinn_data.csv').to_numpy()
 rr_reg.fit(validation[:,:7], validation[:,8])
 
 
 
-data = pd.read_csv('csv/pinn_validated_designs.csv')
+data = pd.read_csv('csv/cma.csv')
 
 data_np = torch.from_numpy(data.to_numpy(dtype=np.float32))
 
