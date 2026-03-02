@@ -16,6 +16,8 @@ train_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/interpolatio
 # train_data = pd.read_csv("../ML_Inductor_QLR_Predictor/Parameter_impact/simulation_csv/new.csv").to_numpy()
 test_data = pd.read_csv('../ML_Inductor_QLR_Predictor/training_csv/pinn_data.csv').to_numpy()
 
+
+
 X_train = train_data[:,:7]
 y_train_R = train_data[:,8]
 y_train_L = train_data[:,9]
