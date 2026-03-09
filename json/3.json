@@ -1,0 +1,88 @@
+{
+  "params": {
+    "t_corelam_nm": {
+      "mode": "const",
+      "value": 78.0
+    },
+    "N_lam": {
+      "mode": "const",
+      "value": 18
+    },
+    "t_lam_nm": {
+      "mode": "const",
+      "value": 15.0
+    },
+    "t_Ti_bottom_nm": {
+      "mode": "const",
+      "value": 20.0
+    },
+    "t_Ti_top_nm": {
+      "mode": "const",
+      "value": 20.0
+    },
+    "w_fc_um": {
+      "mode": "const",
+      "value": 300.0
+    },
+    "w_sc_um": {
+      "mode": "const",
+      "value": 50.0
+    },
+    "alpha_deg": {
+      "mode": "const",
+      "value": 70.0
+    },
+    "w_Cu_um": {
+      "mode": "const",
+      "value": 300.0
+    },
+    "t_Cu_um": {
+      "mode": "const",
+      "value": 22.0
+    },
+    "w_gap_um": {
+      "mode": "const",
+      "value": 30.0
+    },
+    "w_centre_gap_um": {
+      "mode": "const",
+      "value": 100.0
+    },
+    "N_turns": {
+      "mode": "const",
+      "value": 1
+    },
+    "t_Su8_bottom_um": {
+      "mode": "const",
+      "value": 6.0
+    },
+    "t_Su8_top_um": {
+      "mode": "const",
+      "value": 6.0
+    },
+    "lam_bool": {
+      "mode": "const",
+      "value": true
+    },
+    "coupled_inductor": {
+      "mode": "const",
+      "value": false
+    },
+    "coupled_phase": {
+      "mode": "const",
+      "value": "in_phase"
+    },
+    "padding_percentage": {
+      "mode": "const",
+      "value": 300.0
+    },
+    "racetrack_tunel_depth_um": {
+      "mode": "const",
+      "value": 1500.0
+    },
+    "core_material": {
+      "mode": "const",
+      "value": "Z9477"
+    }
+  }
+}

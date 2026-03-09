@@ -16,6 +16,13 @@ WINDING_KEYS = {"w_Cu_um", "t_Cu_um", "w_gap_um", "w_centre_gap_um", "N_turns"}
 DIELECTRIC_KEYS = {"t_Su8_bottom_um", "t_Su8_top_um"}
 # anything else goes to GENERAL
 
+# Enum-style const selectors (rendered as readonly dropdowns in UI)
+ENUM_CONST_OPTIONS = {
+    # Store as user-friendly strings; they will be parsed to the required types in _parse_scalar.
+    "coupled_inductor": ["single", "coupled"],
+    "coupled_phase": ["in_phase", "out_of_phase"],
+}
+
 PARAM_DEFS = [
     # Core
     ("t_corelam_nm", "Core lam thickness (nm)", "float"),
@@ -40,6 +47,8 @@ PARAM_DEFS = [
 
     # General
     ("lam_bool", "Use laminations (lam_bool)", "bool"),
+    ("coupled_inductor", "Coupled inductor (each turn is a winding)", "bool"),
+    ("coupled_phase", "Coupled phase (in_phase / out_of_phase)", "str"),
     ("padding_percentage", "Solution padding (%)", "float"),
     ("racetrack_tunel_depth_um", "Tunnel depth (µm)", "float"),
     ("core_material", "Core material", "str"),
@@ -57,8 +66,8 @@ DEFAULTS = {
     "t_Ti_bottom_nm": 20,
     "t_Ti_top_nm": 20,
 
-    "w_fc_um": 231,
-    "w_sc_um": 20,
+    "w_fc_um": 300,
+    "w_sc_um": 50,
     "w_gap_um": 30,
 
     "alpha_deg": 70,
@@ -66,10 +75,10 @@ DEFAULTS = {
     "padding_percentage": 300,
 
     "w_centre_gap_um": 100,
-    "racetrack_tunel_depth_um": 1.1,
+    "racetrack_tunel_depth_um": 1500,
 
-    "N_turns": 2,
-    "core_material": "Z9713_H2",
+    "N_turns": 1,
+    "core_material": "Z9477",
 }
 
 
@@ -188,6 +197,13 @@ class ParamRow:
 
         self.const_value = tk.StringVar(value=str(default_value))
 
+        # Use enum defaults if configured
+        if key in ENUM_CONST_OPTIONS:
+            if key == "coupled_inductor":
+                self.const_value.set("coupled" if str(default_value).strip().lower() in ("true", "1") or default_value is True else "single")
+            else:
+                self.const_value.set(str(default_value).strip() if str(default_value).strip() else ENUM_CONST_OPTIONS[key][0])
+
         self.list_values = tk.StringVar(value="")
         self.range_start = tk.StringVar(value=str(default_value))
         self.range_stop = tk.StringVar(value=str(default_value))
@@ -201,8 +217,17 @@ class ParamRow:
             self.frame, textvariable=self.mode, values=["const", "sweep"], width=7, state="readonly"
         )
         self.mode_cb.grid(row=0, column=1, padx=6)
-
-        self.const_entry = ttk.Entry(self.frame, textvariable=self.const_value, width=18)
+        # Const value widget: dropdown for enums, entry otherwise
+        if key in ENUM_CONST_OPTIONS:
+            self.const_entry = ttk.Combobox(
+                self.frame,
+                textvariable=self.const_value,
+                values=ENUM_CONST_OPTIONS[key],
+                width=18,
+                state="readonly",
+            )
+        else:
+            self.const_entry = ttk.Entry(self.frame, textvariable=self.const_value, width=18)
         self.const_entry.grid(row=0, column=2, padx=6)
 
         self.sweep_cb = ttk.Combobox(
@@ -260,13 +285,26 @@ class ParamRow:
             return float(text)
         if self.kind == "bool":
             tl = text.strip().lower()
+            # Special case: coupled_inductor uses dropdown values "single"/"coupled"
+            if self.key == "coupled_inductor":
+                if tl in ("coupled", "true", "1", "yes", "y"):
+                    return True
+                if tl in ("single", "false", "0", "no", "n"):
+                    return False
+                raise ValueError(f"{self.key}: expected single/coupled, got '{text}'")
             if tl in ("true", "1", "yes", "y"):
                 return True
             if tl in ("false", "0", "no", "n"):
                 return False
             raise ValueError(f"{self.key}: expected bool (true/false), got '{text}'")
         if self.kind == "str":
-            return text.strip()
+            t = text.strip()
+            if self.key == "coupled_phase":
+                tl = t.lower()
+                if tl not in ("in_phase", "out_of_phase"):
+                    raise ValueError(f"{self.key}: expected in_phase/out_of_phase, got '{text}'")
+                return tl
+            return t
         raise ValueError(f"Unknown kind: {self.kind}")
 
     def build_spec(self):
@@ -471,6 +509,45 @@ class App(tk.Tk):
         params = {}
         for key, row in self.param_rows.items():
             params[key] = row.build_spec()
+        # UI-level constraints
+        # UI-level constraints (conservative):
+        # If coupled_inductor can be True for any run, require N_turns >= 2.
+        cpl_spec = params.get("coupled_inductor", {"mode": "const", "value": False})
+        cpl_possible_true = False
+        if isinstance(cpl_spec, dict):
+            if cpl_spec.get("mode") == "const":
+                cpl_possible_true = bool(cpl_spec.get("value", False))
+            else:
+                vals = cpl_spec.get("values", [])
+                cpl_possible_true = any(bool(v) for v in vals)
+        if cpl_possible_true:
+            n_spec = params.get("N_turns", {"mode": "const", "value": 1})
+            # Determine minimum possible N in sweep/const
+            n_min = None
+            if isinstance(n_spec, dict):
+                if n_spec.get("mode") == "const":
+                    n_min = int(n_spec.get("value", 1))
+                elif "values" in n_spec:
+                    n_min = min(int(v) for v in n_spec.get("values", [1]))
+                else:
+                    # range sweep
+                    n_min = int(n_spec.get("start", 1))
+            if n_min is None or n_min < 2:
+                raise ValueError("If coupled_inductor can be True, N_turns must be >= 2.")
+
+            # Validate coupled_phase if present
+            ph_spec = params.get("coupled_phase", {"mode": "const", "value": "in_phase"})
+            allowed = {"in_phase", "out_of_phase"}
+            def _phase_ok(v):
+                return str(v).strip().lower() in allowed
+            if isinstance(ph_spec, dict):
+                if ph_spec.get("mode") == "const":
+                    if not _phase_ok(ph_spec.get("value", "in_phase")):
+                        raise ValueError("coupled_phase must be in_phase or out_of_phase.")
+                else:
+                    vals = ph_spec.get("values", [])
+                    if any(not _phase_ok(v) for v in vals):
+                        raise ValueError("coupled_phase must be in_phase or out_of_phase.")
         return {"params": params}
 
     def recompute_total_runs(self):
