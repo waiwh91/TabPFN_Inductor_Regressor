@@ -26,8 +26,8 @@ L_r = TabPFNRegressor(device="cuda")
 
 
 
-R_r.fit(np.log(validation2[:,:7]), validation2[:,8])
-L_r.fit(np.log(validation2[:,:7]), validation2[:,9])
+R_r.fit(validation2[:,:7], validation2[:,8])
+L_r.fit(validation2[:,:7], validation2[:,9])
 
 
 model = PINN()
@@ -39,8 +39,8 @@ target_freq = 75.25
 
 # --------- 设计参数约束（常见：工艺/几何范围） ---------
 # 这里假设每个设计参数都在 [-2, 2]
-lb = np.array([8, 150,  75,6, 13, 2])
-ub = np.array([22,300, 375, 18, 22, 6])
+lb = np.array([10, 200,  100,8, 15, 2])
+ub = np.array([20,250, 350, 16, 20, 6])
 
 
 def normalize(x):
@@ -78,8 +78,9 @@ def forward(x: np.ndarray) -> np.ndarray:
 
 
     ######### TabPFN
-    # y1 = R_r.predict(x)
-    # y2 = L_r.predict(x)
+
+    ty1 = R_r.predict(x)
+    ty2 = L_r.predict(x)
 
     ######## PINN
     x = torch.from_numpy(np.log(x)).float()
@@ -87,16 +88,16 @@ def forward(x: np.ndarray) -> np.ndarray:
     y1, y2 = np.exp(model(x[:,:6],x[:,6]).T.detach().numpy())
 
 
-    return np.array([y1, y2], dtype=np.float64)
+    return np.array([y1, y2, ty1, ty2], dtype=np.float64)
 
 # --------- 逆向目标：给定 2 维目标指标 ---------
-y_target = np.array([200, 4], dtype=np.float64)
+y_target = np.array([300, 4,300,4], dtype=np.float64)
 
 
 
 # --------- 代价函数：让 forward(x) 接近 y_target ---------
 # 可加权、可加惩罚、可加正则（例如偏好更小的参数）
-w = np.array([0.5, 10], dtype=np.float64)  # 两个指标的权重
+w = np.array([1,1,0.6,0.6], dtype=np.float64)  # 两个指标的权重
 
 def objective(x: np.ndarray) -> float:
 
@@ -130,16 +131,20 @@ def objective(x: np.ndarray) -> float:
 opts = {
     "popsize": 24,                 # 种群大小（维度6通常 16~40 都行）
     "maxiter": 2000,                # 最大迭代
-    "tolfun": 2e-2,               # 收敛阈值
-    "tolx": 2e-20,
+    "tolfun": 4e-1,               # 收敛阈值
+    "tolx": 4e-1,
     "verb_disp": 20,               # 每隔多少代打印一次
-    "ftarget": 1e-3,
+    "ftarget": 10,
     "bounds": [0, 1],
     "tolflatfitness": 50,
     "tolstagnation": 300,
     # 若你希望更强的边界处理，也可以用：
     # "bounds": [lb.tolist(), ub.tolist()],
 }
+
+flag = 0
+
+
 
 es = cma.CMAEvolutionStrategy(x0, sigma0, opts)
 
@@ -168,13 +173,14 @@ print("y_best   =", y_best)
 print("loss     =", final_loss)
 print("stop for", es.stop())
 
-df = pd.read_csv("csv/cma.csv")
 
 # print(df.columns)
 
 print("=================")
-print(forward(x_best))
+print("ANN value: ", forward(x_best))
 
+
+df = pd.read_csv("csv/cma.csv")
 
 
 new_roll = {

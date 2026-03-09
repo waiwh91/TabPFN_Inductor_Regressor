@@ -2,15 +2,15 @@
   "params": {
     "t_corelam_nm": {
       "mode": "const",
-      "value": 166.0
+      "value": 116.0
     },
     "N_lam": {
       "mode": "const",
-      "value": 9
+      "value": 11
     },
     "t_lam_nm": {
       "mode": "const",
-      "value": 14.0
+      "value": 15.0
     },
     "t_Ti_bottom_nm": {
       "mode": "const",
@@ -34,11 +34,11 @@
     },
     "w_Cu_um": {
       "mode": "const",
-      "value": 298.0
+      "value": 245.0
     },
     "t_Cu_um": {
       "mode": "const",
-      "value": 22.0
+      "value": 16.0
     },
     "w_gap_um": {
       "mode": "const",
@@ -54,11 +54,11 @@
     },
     "t_Su8_bottom_um": {
       "mode": "const",
-      "value": 5.0
+      "value": 6.0
     },
     "t_Su8_top_um": {
       "mode": "const",
-      "value": 5.0
+      "value": 6.0
     },
     "lam_bool": {
       "mode": "const",
